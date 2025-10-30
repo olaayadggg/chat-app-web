@@ -77,7 +77,7 @@ export default function Chat({ selectedEmployeeId }) {
       (snap) => {
         setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         setLoadingMessages(false);
-        setTimeout(scrollToBottom, 200); // scroll after new messages
+        setTimeout(scrollToBottom, 200);
       },
       () => setLoadingMessages(false)
     );
@@ -88,12 +88,16 @@ export default function Chat({ selectedEmployeeId }) {
   const handleScroll = () => {
     if (!messagesRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messagesRef.current;
-    setShowScrollDown(scrollHeight - scrollTop - clientHeight);
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    setShowScrollDown(distanceFromBottom > 150);
   };
-
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    setShowScrollDown(false);
+    if (messagesRef.current) {
+      messagesRef.current.scrollTo({
+        top: messagesRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, []);
 
   /* === Mark notifications as read === */
@@ -192,9 +196,9 @@ export default function Chat({ selectedEmployeeId }) {
 /* ============ Styles ============ */
 const Container = styled.div`
   display: flex;
-  height: 100vh;
-  overflow: auto;
+  height: 90vh;
   background: #f9fafb;
+  overflow: hidden;
 `;
 
 const ChatArea = styled.div`

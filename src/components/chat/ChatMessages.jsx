@@ -76,7 +76,6 @@ export default function ChatMessages({
 const Messages = styled.div`
   flex: 1;
   padding: 1.25rem;
-  //   padding-right: 120px; /* important: reserve space on the right for times/scrollbar */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
