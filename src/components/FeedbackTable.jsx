@@ -62,7 +62,7 @@ export default function Dashboard({ feedback }) {
                     </td>
                     <td>{f.employeeName}</td>
                     <td>
-                      <ScoreBadge score={f.score}>{f.score}</ScoreBadge>
+                      <ScoreBadge $score={f.score}>{f.score}</ScoreBadge>
                     </td>
                     {/* <td>{(f.notes || "").slice(0, 60)}</td> */}
                     <td className="notes-cell">

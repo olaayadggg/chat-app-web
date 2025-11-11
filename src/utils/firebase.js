@@ -8,13 +8,14 @@ let app, db, messaging;
 export function initializeFirebase() {
   if (app) return { app, db, messaging };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBXJxdi54-LtU2AEZT7dxzjO_xuHgfIJo8",
-    authDomain: "chat-app-908c1.firebaseapp.com",
-    projectId: "chat-app-908c1",
-    storageBucket: "chat-app-908c1.firebasestorage.app",
-    messagingSenderId: "441868655557",
-    appId: "1:441868655557:web:ecd53da8f0682af48149ac",
+   const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+
   };
 
   app = initializeApp(firebaseConfig);
@@ -32,33 +33,45 @@ export function getDb() {
 
 export async function initializeMessagingForHR() {
   try {
+    // Request user permission
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
       console.warn("Notification permission denied.");
       return;
     }
 
+    // Initialize Firebase (only once)
     const { messaging } = initializeFirebase();
+
+    // Register service worker manually
+    const registration = await navigator.serviceWorker.register(
+      "/firebase-messaging-sw.js"
+    );
+    console.log("✅ Service worker registered:");
 
     // Get FCM token
     const token = await getToken(messaging, {
-      vapidKey:
-        "BLgNVGtUngqW5KFyLrOVj1ombsEtM_iOQsINc2KTKaEclvCQPXTcVvMzq2QrayugZPf7w7nDqZBuvDhIQK1-7AM",
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+      serviceWorkerRegistration: registration,
     });
 
-    console.log("🔑 FCM Token:", token);
+    if (!token) {
+      console.warn("⚠️ No FCM token retrieved.");
+      return;
+    }
 
-    // Save HR token to Firestore under userTokens/hr_sconnor
+    console.log("🔑 FCM Token:");
+
+    // Save HR token to Firestore
     await setDoc(doc(db, "userTokens", "hr_sconnor"), { token });
 
     // Listen for foreground messages
     onMessage(messaging, (payload) => {
       const { title, body } = payload.notification || {};
-      if (title) {
-        new Notification(title, { body });
-      }
+      if (title) new Notification(title, { body });
     });
+
+    console.log("✅ FCM initialized successfully.");
   } catch (error) {
-    console.error("Error initializing FCM:", error);
-  }
-}
+    console.error("❌ Error initializing FCM:", error);
+  }}

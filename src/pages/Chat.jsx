@@ -7,9 +7,11 @@ import {
   onSnapshot,
   addDoc,
   getDocs,
+  updateDoc,
   writeBatch,
   where,
   limit,
+  doc,
 } from "firebase/firestore";
 import { getDb } from "../utils/firebase";
 import ConversationSidebar from "../components/ConversationSidebar";
@@ -44,11 +46,32 @@ export default function Chat({ selectedEmployeeId }) {
     );
     const unsub = onSnapshot(
       q,
-      (snap) => {
-        setConversations(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      async (snap) => {
+        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        // Ensure every conversation has a `lastMessageSender` field for consistency
+        const missingSenderDocs = docs.filter(
+          (d) => !d.lastMessageSender && d.lastMessage
+        );
+
+        if (missingSenderDocs.length > 0) {
+          const batch = writeBatch(db);
+          missingSenderDocs.forEach((conv) =>
+            batch.update(doc(db, "conversations", conv.id), {
+              lastMessageSender: "unknown",
+            })
+          );
+          await batch.commit();
+        }
+
+        // Update state (even if sender field was missing)
+        setConversations(docs);
         setLoadingConversations(false);
       },
-      () => setLoadingConversations(false)
+      (error) => {
+        console.error("Error fetching conversations:", error);
+        setLoadingConversations(false);
+      }
     );
     return () => unsub();
   }, [db]);
@@ -122,7 +145,6 @@ export default function Chat({ selectedEmployeeId }) {
       const conv = conversations.find((c) => c.id === employeeId);
       if (conv) {
         setSelected(conv);
-        console.log("Opened conversation with:", employeeId);
         setTimeout(scrollToBottom, 300);
       }
     },
@@ -139,6 +161,12 @@ export default function Chat({ selectedEmployeeId }) {
       text: text.trim(),
       timestamp: new Date(),
       image: user.image,
+    });
+
+    await updateDoc(doc(db, "conversations", selected.id), {
+      lastMessage: text.trim(),
+      lastMessageTimestamp: new Date(),
+      lastMessageSender: user.id, // save who sent the last message
     });
 
     await addDoc(collection(db, "notifications"), {

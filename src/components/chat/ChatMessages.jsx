@@ -55,11 +55,11 @@ export default function ChatMessages({
             const isFromHR = m.senderId === user.id;
             const time = formatTime(m.timestamp);
             return (
-              <MessageBlock key={m.id} fromHr={isFromHR}>
+              <MessageBlock key={m.id} $fromHr={isFromHR}>
                 {!isFromHR && <AvatarSmall src={selected?.image} alt="emp" />}
-                <MessageColumn fromHr={isFromHR}>
-                  <MessageBubble fromHr={isFromHR}>{m.text}</MessageBubble>
-                  <MessageTime fromHr={isFromHR}>{time}</MessageTime>
+                <MessageColumn $fromHr={isFromHR}>
+                  <MessageBubble $fromHr={isFromHR}>{m.text}</MessageBubble>
+                  <MessageTime $fromHr={isFromHR}>{time}</MessageTime>
                 </MessageColumn>
                 {isFromHR && <AvatarSmall src={user.image} alt="hr" />}
               </MessageBlock>
@@ -86,18 +86,18 @@ const Messages = styled.div`
 const MessageBlock = styled.div`
   display: flex;
   align-items: flex-end;
-  justify-content: ${(p) => (p.fromHr ? "flex-end" : "flex-start")};
+  justify-content: ${(p) => (p.$fromHr ? "flex-end" : "flex-start")};
   gap: 10px;
 `;
 const MessageColumn = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: ${(p) => (p.fromHr ? "flex-end" : "flex-start")};
+  align-items: ${(p) => (p.$fromHr ? "flex-end" : "flex-start")};
   max-width: 65%;
 `;
 const MessageBubble = styled.div`
-  background: ${(p) => (p.fromHr ? "#2563eb" : "#fff")};
-  color: ${(p) => (p.fromHr ? "#fff" : "#111827")};
+  background: ${(p) => (p.$fromHr ? "#2563eb" : "#fff")};
+  color: ${(p) => (p.$fromHr ? "#fff" : "#111827")};
   padding: 0.7rem 1rem;
   border-radius: 14px;
   font-size: 14px;

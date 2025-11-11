@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import styled from "styled-components";
 import SearchBar from "./SearchBar";
+import { useUser } from "../context/UserContext";
 
 export default function ConversationSidebar({
   conversations = [],
@@ -9,6 +10,7 @@ export default function ConversationSidebar({
   markNotificationsRead,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useUser();
 
   const filteredConversations = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -18,6 +20,14 @@ export default function ConversationSidebar({
         c.role?.toLowerCase().includes(term)
     );
   }, [searchTerm, conversations]);
+
+  const getLastMessageLabel = (conv) => {
+    if (!conv.lastMessage) return "No messages yet";
+    // Identify who sent the last message
+    const isMe = conv.lastMessageSender === user.id;
+    const senderName = isMe ? "You" : conv.name?.split(" ")[0] || "Employee";
+    return `${senderName}: ${conv.lastMessage}`;
+  };
 
   return (
     <Sidebar>
@@ -44,7 +54,7 @@ export default function ConversationSidebar({
             <Avatar src={c.image} alt={c.name} />
             <div>
               <Name>{c.name}</Name>
-              <Role>{c.lastMessage}</Role>
+              <LastMessage>{getLastMessageLabel(c)}</LastMessage>
             </div>
           </ConversationItem>
         ))
@@ -95,10 +105,13 @@ const Name = styled.div`
   color: #111827;
 `;
 
-const Role = styled.div`
+const LastMessage = styled.div`
   font-size: 13px;
   color: #6b7280;
   margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const EmptyMsg = styled.div`

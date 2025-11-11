@@ -4,17 +4,24 @@ import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 Chart.register(ArcElement, Tooltip, Legend);
 
 export default function PieChartSection({ distribution }) {
+  // Calculate total feedback count
+  const total =
+    Object.values(distribution).reduce((sum, val) => sum + (val || 0), 0) || 1;
+
+  // Convert to percentage
+  const percentageData = [
+    (distribution[1] / total) * 100 || 0,
+    (distribution[2] / total) * 100 || 0,
+    (distribution[3] / total) * 100 || 0,
+    (distribution[4] / total) * 100 || 0,
+    (distribution[5] / total) * 100 || 0,
+  ];
+
   const data = {
     labels: ["1 Star", "2 Stars", "3 Stars", "4 Stars", "5 Stars"],
     datasets: [
       {
-        data: [
-          distribution[1],
-          distribution[2],
-          distribution[3],
-          distribution[4],
-          distribution[5],
-        ],
+        data: percentageData,
         backgroundColor: [
           "#f87171",
           "#fb923c",
@@ -27,27 +34,54 @@ export default function PieChartSection({ distribution }) {
     ],
   };
 
+  // Chart options — show % on hover
+  const options = {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || "";
+            const value = context.raw?.toFixed(1) || 0;
+            return `${label}: ${value}%`;
+          },
+        },
+      },
+      legend: {
+        position: "bottom",
+        labels: {
+          color: "#374151",
+          font: { size: 14 },
+        },
+      },
+    },
+  };
+
   return (
     <ChartSection>
       <Card>
         <Content>
-          <SectionTitle>Score Score Distribution</SectionTitle>
+          <SectionTitle>Feedback Score Distribution</SectionTitle>
           <Description>
-            This chart represents the overall distribution of Feedback scores among
-            employees for the current evaluation cycle.
+            This chart shows the percentage distribution of feedback scores
+            among employees for the current evaluation cycle.
           </Description>
           <List>
-            {Object.entries(distribution).map(([score, count]) => (
-              <ListItem key={score}>
-                <span>{score} Star</span>
-                <b>{count || 0}</b>
-              </ListItem>
-            ))}
+            {Object.entries(distribution).map(([score, count]) => {
+              const percent = ((count / total) * 100).toFixed(1);
+              return (
+                <ListItem key={score}>
+                  <span>{score} Star</span>
+                  <b>
+                    {count || 0} ({percent}%)
+                  </b>
+                </ListItem>
+              );
+            })}
           </List>
         </Content>
 
         <PieWrapper>
-          <Pie data={data} />
+          <Pie data={data} options={options} />
         </PieWrapper>
       </Card>
     </ChartSection>
